@@ -1,12 +1,14 @@
 import express from 'express';
 import graphqlHTTP from 'express-graphql';
 import {makeExecutableSchema} from 'graphql-tools';
+import {find} from 'lodash';
 
 const typeDefs = `
   type Link {
     id: Int! @unique
     url: String!
     description: String!
+    author: User
   }
 
   type User {
@@ -24,8 +26,13 @@ const typeDefs = `
 `;
 
 const links = [
-  {id: 0, url: 'https://example.com', description: 'a website'},
-  {id: 1, url: 'https://example2.com', description: 'another website'},
+  {id: 0, author: 1, url: 'https://example.com', description: 'a website'},
+  {
+    id: 1,
+    author: 2,
+    url: 'https://example2.com',
+    description: 'another website',
+  },
 ];
 
 const users = [
@@ -53,9 +60,12 @@ const users = [
 const resolvers = {
   Query: {
     allLinks: () => links,
-    link: (_, {id}) => links.find(i => i.id === id),
+    link: (_, {id}) => find(links, {id}),
     allUsers: () => users,
-    user: (_, {id}) => users.find(i => i.id === id),
+    user: (_, {id}) => find(users, {id}),
+  },
+  Link: {
+    author: ({author}) => find(users, {id: author}),
   },
 };
 
