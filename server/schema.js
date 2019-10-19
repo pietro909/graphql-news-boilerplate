@@ -8,6 +8,9 @@ import {
   GraphQLList,
 } from 'graphql';
 import DB from './db';
+import {PubSub} from 'graphql-subscriptions';
+
+const pubSub = new PubSub();
 
 /**
  * This is a _thunk_ lazily evaluated
@@ -106,6 +109,7 @@ const mutationType = new GraphQLObjectType({
           throw new Error(`Couldn't find link with id ${id}`);
         }
         link.score += 1;
+        pubSub.publish('Vote', {Vote: {score: link.score, id: link.id}});
         return link;
       },
     },
@@ -118,6 +122,7 @@ const mutationType = new GraphQLObjectType({
           throw new Error(`Couldn't find link with id ${id}`);
         }
         link.score -= 1;
+        pubSub.publish('Vote', {Vote: {score: link.score, id: link.id}});
         return link;
       },
     },
@@ -139,6 +144,22 @@ const mutationType = new GraphQLObjectType({
   }),
 });
 
-const schema = new GraphQLSchema({query: queryType, mutation: mutationType});
+const subscriptionType = new GraphQLObjectType({
+  name: 'subscription',
+  fields: () => ({
+    Vote: {
+      type: linkType,
+      subscribe: () => pubSub.asyncIterator('Vote'),
+    },
+  }),
+});
+
+const config = {
+  query: queryType,
+  mutation: mutationType,
+  subscription: subscriptionType,
+};
+
+const schema = new GraphQLSchema(config);
 
 export default schema;
