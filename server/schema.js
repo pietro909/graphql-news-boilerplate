@@ -63,6 +63,8 @@ const linkType = new GraphQLObjectType({
       type: NonNull(new GraphQLList(commentsType)),
       resolve: ({comments}) => comments.map(id => find(DB.comments, {id})),
     },
+
+    score: {type: NonNull(GraphQLInt)},
   },
 });
 
@@ -92,6 +94,51 @@ const queryType = new GraphQLObjectType({
   },
 });
 
-const schema = new GraphQLSchema({query: queryType});
+const mutationType = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: () => ({
+    upvoteLink: {
+      type: linkType,
+      args: {id: {type: IDType}},
+      resolve: (_, {id}) => {
+        const link = find(DB.links, {id});
+        if (!link) {
+          throw new Error(`Couldn't find link with id ${id}`);
+        }
+        link.score += 1;
+        return link;
+      },
+    },
+    downvoteLink: {
+      type: linkType,
+      args: {id: {type: IDType}},
+      resolve: (_, {id}) => {
+        const link = find(DB.links, {id});
+        if (!link) {
+          throw new Error(`Couldn't find link with id ${id}`);
+        }
+        link.score -= 1;
+        return link;
+      },
+    },
+    createLink: {
+      type: linkType,
+      args: {
+        author: {type: NonNull(GraphQLInt)},
+        description: {type: NonNull(GraphQLString)},
+        url: {type: NonNull(GraphQLString)},
+      },
+      resolve: (_, linkData) => {
+        // TODO: user from the context
+        const nextID = DB.links[DB.links.length - 1].id + 1;
+        const nextLink = {...linkData, id: nextID, score: 0, comments: []};
+        DB.links.push(nextLink);
+        return nextLink;
+      },
+    },
+  }),
+});
+
+const schema = new GraphQLSchema({query: queryType, mutation: mutationType});
 
 export default schema;
