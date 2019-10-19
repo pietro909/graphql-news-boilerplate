@@ -22,7 +22,7 @@ const typeDefs = `
   type User {
     id: Int! @unique
     username: String!
-    age: Int!
+    about: String!
   }
 
   type Comment {
@@ -60,10 +60,10 @@ const DB = {
   ],
 
   users: [
-    {id: 0, username: 'pietro', age: 36},
-    {id: 1, username: 'andrea', age: 34},
-    {id: 2, username: 'ettore', age: 31},
-    {id: 3, username: 'lisa', age: 25},
+    {id: 0, username: 'angi', about: 'the oldest'},
+    {id: 1, username: 'giangi', about: 'the smartest'},
+    {id: 2, username: 'pungi', about: 'the troublesome'},
+    {id: 3, username: 'rangi', about: 'the youngest'},
   ],
   comments: [
     {id: 0, parent: null, author: 0, content: 'chocolate is good'},
