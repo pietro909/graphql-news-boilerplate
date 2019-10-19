@@ -1,38 +1,38 @@
 import express from 'express';
 import graphqlHTTP from 'express-graphql';
-import {buildSchema} from 'graphql';
+import {makeExecutableSchema} from 'graphql-tools';
 
-const schema = buildSchema(`
+const typeDefs = `
   type Link {
-    _id: Int!
+    id: Int! @unique
     url: String!
     description: String!
   }
 
   type User {
-    _id: Int!
+    id: Int! @unique
     username: String!
     age: Int!
   }
 
   type Query {
     allLinks: [Link!]!
-    link(_id: Int!): Link
+    link(id: Int!): Link
     allUsers: [User!]!
-    user(_id: Int!): User
+    user(id: Int!): User
   }
-`);
+`;
 
 const links = [
-  {_id: 0, url: 'https://example.com', description: 'a website'},
-  {_id: 1, url: 'https://example2.com', description: 'another website'},
+  {id: 0, url: 'https://example.com', description: 'a website'},
+  {id: 1, url: 'https://example2.com', description: 'another website'},
 ];
 
 const users = [
-  {_id: 0, username: 'pietro', age: 36},
-  {_id: 1, username: 'andrea', age: 34},
-  {_id: 2, username: 'ettore', age: 31},
-  {_id: 3, username: 'lisa', age: 25},
+  {id: 0, username: 'pietro', age: 36},
+  {id: 1, username: 'andrea', age: 34},
+  {id: 2, username: 'ettore', age: 31},
+  {id: 3, username: 'lisa', age: 25},
 ];
 
 /**
@@ -50,16 +50,20 @@ const users = [
  * 3 - Promise
  * 4 - Scalar Object Value
  */
-const root = {
-  allLinks: () => links,
-  link: ({_id}) => links.find(i => i._id === _id),
-  allUsers: () => users,
-  user: ({_id}) => users.find(i => i._id === _id),
+const resolvers = {
+  Query: {
+    allLinks: () => links,
+    link: (_, {id}) => links.find(i => i.id === id),
+    allUsers: () => users,
+    user: (_, {id}) => users.find(i => i.id === id),
+  },
 };
+
+const schema = makeExecutableSchema({typeDefs, resolvers});
 
 const app = express();
 
-app.use('/graphql', graphqlHTTP({schema, rootValue: root, graphiql: true}));
+app.use('/graphql', graphqlHTTP({schema, graphiql: true}));
 
 app.listen(4000, () =>
   console.log('Running a GraphQL server on localhost:4000/graphql'),
